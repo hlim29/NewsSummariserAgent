@@ -40,13 +40,26 @@ public class NewsParser {
 		}
 		
 		//parsedHtml = Jsoup.parse(htmlContent);
-		System.out.println("Header is: " + parsedHtml.body().select("h1").first().text());
-		Elements paragraphs = parsedHtml.body().select("div[class*=story] > p");
+		//System.out.println("Header is: " + parsedHtml.body().select("h1").first().text());
+		
+		System.out.println(splitHeader(parsedHtml.body().select("h1").first().text()));
+		
+		Elements paragraphs = parsedHtml.body().select("div[class*=content-body] > p");
 		//paragraphs = parsedHtml.body().select("div[class*=story] > p");
 		for (Element e : paragraphs){
 			System.out.println(e.text());
 		}
 		//System.out.println(paragraphs.first().text());
+	}
+	
+	private String splitHeader(String header){
+		String splittedHeader[] = header.split("[\\p{P} \\t\\n\\r]");
+		String buffer = new String();
+		for (String s : splittedHeader){
+			buffer += s;
+			buffer += "|";
+		}
+		return buffer;
 	}
 
 	public String getHtmlContents() {
@@ -59,11 +72,11 @@ public class NewsParser {
 	}
 
 	public boolean isUrlValid() {
-		return !(Url == null);
+		return !(parsedHtml == null);
 	}
 
 	public void debug() {
-		System.out.println("The URL is " + Url.toString());
+		//System.out.println("The URL is " + Url.toString());
 	}
 
 }
