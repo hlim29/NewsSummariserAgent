@@ -8,6 +8,7 @@ public class Main {
 		NewsParser news = new NewsParser(readURL());
 		if (news.isUrlValid()){
 			news.debug();
+			System.out.println(news.getHtmlContents());
 		}
 		else {
 			System.out.println("The URL is invalid, please try again");
