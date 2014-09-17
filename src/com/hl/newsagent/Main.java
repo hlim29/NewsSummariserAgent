@@ -8,6 +8,8 @@ public class Main {
 		NewsParser news = new NewsParser(readURL());
 		if (news.isUrlValid()){
 			news.debug();
+			news.calculateRelevance();
+			news.printMostRelevant();
 			//System.out.println(news.getHtmlContents());
 		}
 		else {
