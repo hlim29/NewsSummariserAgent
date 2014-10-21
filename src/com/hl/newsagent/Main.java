@@ -5,11 +5,14 @@ public class Main {
 	private static Scanner sc = new Scanner(System.in);
 
 	public static void main(String[] args) {
+		System.out.println("NewsAgent by Henry L , UTS, 2014. Version v0.3");
 		NewsParser news = new NewsParser(readURL());
 		if (news.isUrlValid()){
-			news.debug();
 			news.calculateRelevance();
 			news.printMostRelevant();
+			
+			news.createWordCount();
+			news.printWordCount();
 			//System.out.println(news.getHtmlContents());
 		}
 		else {

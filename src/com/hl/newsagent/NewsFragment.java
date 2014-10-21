@@ -23,6 +23,10 @@ public class NewsFragment {
 	public void incrementHeadlineWord(){
 		rank += 10;
 	}
+	
+	public void incrementFrequentWord(){
+		rank += 5;
+	}
 
 	public String getSentence() {
 		return sentence;
