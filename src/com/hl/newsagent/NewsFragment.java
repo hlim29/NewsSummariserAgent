@@ -25,7 +25,7 @@ public class NewsFragment {
 	}
 	
 	public void incrementFrequentWord(){
-		rank += 5;
+		rank += 3;
 	}
 
 	public String getSentence() {

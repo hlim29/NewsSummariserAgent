@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.jsoup.HttpStatusException;
@@ -24,12 +25,12 @@ import org.jsoup.select.Elements;
 
 public class NewsParser {
 	private int uniqueWordCount;
-	private URL Url;
 	private String headline;
 	private String htmlContent;
 	private Document parsedHtml;
 	private LinkedList<String> content;
 	private LinkedList<String> headlineKeywords = new LinkedList<String>();
+	private LinkedList<String> frequentWords = new LinkedList<String>();
 	private LinkedList<NewsFragment> contents = new LinkedList<NewsFragment>();
 	private Map<String, Integer> wordFreq = new HashMap<String, Integer>();
 	private LinkedList<String> words = new LinkedList<String>();
@@ -37,22 +38,20 @@ public class NewsParser {
 	public NewsParser(String URL) {
 		try {
 			parsedHtml = Jsoup.connect(URL).get();
-		} catch (IllegalArgumentException e){
-			System.out.println("The URL is invalid: "
-					+ e.getMessage());
+		} catch (IllegalArgumentException e) {
+			System.out.println("The URL is invalid: " + e.getMessage());
 			return;
 		} catch (MalformedURLException e) {
-			System.out.println("The URL is invalid: "
-					+ e.getMessage());
+			System.out.println("The URL is invalid: " + e.getMessage());
 			return;
 		} catch (HttpStatusException e) {
 			System.out.println("Error with getting the HTML: "
 					+ e.getStatusCode());
 			return;
 		} catch (IOException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
-		
+
 		System.out.println("HEADLINE: "
 				+ splitHeader(parsedHtml.body().select("h1").first().text()));
 
@@ -60,43 +59,45 @@ public class NewsParser {
 
 		Elements paragraphs = null;
 
-		paragraphs = parsedHtml.body().select("div[class*=article] > p");
-
-		if (paragraphs.size() == 0) {
-			paragraphs = parsedHtml.body().select("div[class*=story] > p");
-		}
-
-		if (paragraphs.size() == 0) {
-			paragraphs = parsedHtml.body().select("div[class*=main] > p");
-		}
-
-		if (paragraphs.size() == 0) {
-			paragraphs = parsedHtml.body().select("article > p");
-		}
+		paragraphs = retrieveHtmlContents(paragraphs);
 
 		BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.US);
 		int id = 0;
 		for (Element e : paragraphs) {
+			iterator.setText(e.text());
+			int start = iterator.first();
+			for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator
+					.next()) {
+				NewsFragment n = new NewsFragment(e.text()
+						.substring(start, end));
+				n.setId(id);
+				id++;
+				contents.add(n);
+			}
 
-			NewsFragment n = new NewsFragment(e.text());
-			n.setId(id);
-			id++;
-			contents.add(n);
 		}
 
+	}
+
+	private Elements retrieveHtmlContents(Elements paragraphs) {
+		String[] htmlLayouts = { "div[class*=article] > p",
+				"div[class*=story] > p", "div[class*=main] > p", "article > p" };
+		int i = 0;
+		paragraphs = parsedHtml.body().select(htmlLayouts[i]);
+		while (paragraphs.size() == 0 && i < htmlLayouts.length) {
+			paragraphs = parsedHtml.body().select(htmlLayouts[i]);
+			i++;
+		}
+		return paragraphs;
 	}
 
 	private String splitHeader(String header) {
 		String splittedHeader[] = header.split("[\\p{P} \\t\\n\\r]");
 
-		String buffer = new String();
 		for (String s : splittedHeader) {
-			// buffer += s;
-			// buffer += "|";
 			headlineKeywords.add(s);
 		}
 		return header;
-
 	}
 
 	public void calculateRelevance() {
@@ -106,20 +107,33 @@ public class NewsParser {
 					news.incrementHeadlineWord();
 			}
 		}
-		
-		
+
+		for (NewsFragment news : contents) {
+			for (String word : frequentWords) {
+				if (news.getSentence().toLowerCase()
+						.contains(word.toLowerCase()))
+					news.incrementFrequentWord();
+			}
+		}
+
 	}
 
 	public void createWordCount() {
 		String sentence;
 		String[] wordArray;
 		for (NewsFragment news : contents) {
-			// for (String headlineKeyword : headlineKeywords){
 			sentence = news.getSentence();
 			wordArray = sentence.split("[\\p{P} \\t\\n\\r]");
 			for (String s : wordArray) {
+				s = s.toLowerCase();
 				Integer val = wordFreq.get(s);
 				if (val != null) {
+					for (Entry<String, Integer> e : wordFreq.entrySet()){
+						if (e.getKey().startsWith(s.substring(0, s.length()/2))){
+							wordFreq.put(s, new Integer(val + 1));
+							uniqueWordCount++;
+						}
+					}
 					wordFreq.put(s, new Integer(val + 1));
 					uniqueWordCount++;
 				} else {
@@ -127,12 +141,10 @@ public class NewsParser {
 					words.add(s);
 				}
 			}
-
-			// }
 		}
 	}
 
-	public void printWordCount() {
+	public void sortFrequentWords() {
 		ValueComparator bvc = new ValueComparator(wordFreq);
 		TreeMap<String, Integer> sorted_map = new TreeMap<String, Integer>(bvc);
 
@@ -141,16 +153,20 @@ public class NewsParser {
 		List<String> keys = new LinkedList<String>(sorted_map.keySet());
 
 		for (int i = 0; i < keys.size() / 5; i++) {
-			if (keys.get(i).length() > 4) {
+			//if (keys.get(i).length() > 4) {
+				frequentWords.add(keys.get(i));
+
 				System.out.println(keys.get(i));
-			} 
+			//}
 		}
 
 	}
 
 	/**
-	 * A private class used for sorting a Map by the value
-	 * Sourced from: http://stackoverflow.com/questions/109383/how-to-sort-a-mapkey-value-on-the-values-in-java
+	 * A private class used for sorting a Map by the value Sourced from:
+	 * http://stackoverflow
+	 * .com/questions/109383/how-to-sort-a-mapkey-value-on-the-values-in-java
+	 * 
 	 * @author user157196 from StackOverflow
 	 *
 	 */
@@ -185,7 +201,8 @@ public class NewsParser {
 		Collections.sort(tempCollection, new CompareById());
 
 		for (NewsFragment n : tempCollection) {
-			System.out.println(n.getSentence());
+			System.out.println(n.getId() + " " + n.getRank() + " "
+					+ n.getSentence());
 		}
 	}
 
@@ -216,5 +233,10 @@ public class NewsParser {
 		return !(parsedHtml == null);
 	}
 
+	public void printContents() {
+		for (NewsFragment s : contents) {
+			System.out.println(s.getSentence());
+		}
+	}
 
 }
