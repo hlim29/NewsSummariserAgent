@@ -1,7 +1,5 @@
 package com.hl.newsagent;
 
-import java.util.Comparator;
-
 public class NewsFragment {
 	private int Id;
 	private String sentence;

@@ -5,14 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.BreakIterator;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -27,10 +24,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class NewsParser {
-	private int uniqueWordCount;
+
 	private String headline;
-	private String htmlContent;
-	private String Url;
 	private Document parsedHtml;
 	private LinkedList<String> headlineKeywords = new LinkedList<String>();
 	private LinkedList<String> frequentWords = new LinkedList<String>();
@@ -41,11 +36,12 @@ public class NewsParser {
 	public NewsParser(String URL) {
 		if (!parseUrl(URL))
 			return;
-		else
-			this.Url = URL;
 		headline = parsedHtml.body().select("h1").first().text();
 	}
 
+	/**
+	 * Extracts the keywords from the headline
+	 */
 	public void processHeadline() {
 		String splittedHeader[] = headline.split("[\\p{P} \\t\\n\\r]");
 
@@ -58,6 +54,9 @@ public class NewsParser {
 		System.out.println();
 	}
 
+	/**
+	 * Adds each sentence into the contents list
+	 */
 	public void populateSentencesList() {
 		Elements paragraphs = null;
 		paragraphs = retrieveHtmlContents(paragraphs);
@@ -84,6 +83,11 @@ public class NewsParser {
 		}
 	}
 
+	/**
+	 * Tries to parse the URL. Returns true if the page is valid and accessible
+	 * @param URL
+	 * @return
+	 */
 	private boolean parseUrl(String URL) {
 		try {
 			parsedHtml = Jsoup.connect(URL).get();
@@ -141,6 +145,10 @@ public class NewsParser {
 
 	}
 
+	/**
+	 * Create a count of the most frequent words
+	 * Uses stemming to combine similar words
+	 */
 	public void createWordCount() {
 		String sentence;
 		String[] wordArray;
@@ -164,11 +172,9 @@ public class NewsParser {
 						if (e.getKey().startsWith(
 								s.substring(0, s.length() / 2))) {
 							wordFreq.put(s, new Integer(val + 1));
-							uniqueWordCount++;
 						}
 					}
 					wordFreq.put(s, new Integer(val + 1));
-					uniqueWordCount++;
 				} else {
 					// If the word is available, increment the value in the
 					// hashmap
