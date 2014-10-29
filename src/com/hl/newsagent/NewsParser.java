@@ -356,7 +356,6 @@ public class NewsParser {
 			
 		}
 		
-		System.out.println(exclusionList);
 	}
 	
 
